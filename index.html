@@ -1,0 +1,115 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151d2b">
+  <meta name="description" content="Controle financeiro local do Esquina Bar, com funcionamento offline e backup dos lançamentos.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <title>Esquina Bar · Controle Financeiro</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="login-overlay" id="loginOverlay" hidden>
+    <form class="login-card" id="loginForm">
+      <div class="login-mark">EB<span>•</span></div>
+      <p class="login-eyebrow">MIGRAÇÃO DOS DADOS ANTIGOS</p>
+      <h1>Esquina <em>Bar</em></h1>
+      <p class="login-description">Use o acesso de administrador atual para copiar os lançamentos do servidor para este dispositivo. Os dados antigos não serão apagados do servidor.</p>
+      <label>Usuário administrador<input id="loginUsername" name="username" autocomplete="username" required value="admin"></label>
+      <label>Senha do administrador<input id="loginPassword" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="login-error" id="loginError" role="alert"></p>
+      <button class="button button-primary" type="submit" id="loginSubmit">Importar registros</button>
+      <button class="button button-secondary" type="button" id="closeMigration">Cancelar</button>
+    </form>
+  </div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">EB<span>•</span></div>
+        <div class="brand-copy"><strong>ESQUINA <span>BAR</span></strong><small>CONTROLE FINANCEIRO</small></div>
+      </div>
+      <div class="sidebar-label">MENU PRINCIPAL</div>
+      <nav class="main-nav" aria-label="Menu principal">
+        <button class="nav-item active" data-page="dashboard"><span class="nav-icon">▦</span><span>Visão geral</span></button>
+        <button class="nav-item" data-page="transactions"><span class="nav-icon">↕</span><span>Lançamentos</span><span class="nav-count" id="navCount">0</span></button>
+        <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span><span>Relatórios</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-tip-icon">✦</div>
+        <strong>Fechamento sem surpresa.</strong>
+        <p>Registre cada entrada e saída para enxergar o resultado real do bar.</p>
+        <button class="side-link" id="sidebarNew">+ Novo lançamento</button>
+      </div>
+      <div class="sidebar-footer"><span class="online-dot"></span> Dados salvos neste dispositivo <span class="privacy-lock">⌑</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">☰</button>
+        <div class="breadcrumbs"><span>Esquina Bar</span><span class="crumb-slash">/</span><strong id="breadcrumbCurrent">Visão geral</strong></div>
+        <div class="topbar-right"><div class="local-status"><span class="online-dot"></span> Controle financeiro</div><button class="button button-secondary" id="logoutButton" type="button" hidden>Sair</button><button class="avatar" aria-label="Esquina Bar">EB</button></div>
+      </header>
+
+      <div class="page-wrap">
+        <section class="page-section active" id="page-dashboard">
+          <div class="page-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> PAINEL FINANCEIRO</div><h1>O dinheiro do bar, <em>sem mistério.</em></h1><p class="subtitle">Acompanhe o que entrou, o que saiu e quanto ficou no caixa.</p></div>
+            <button class="button button-primary" id="newMovementTop"><span class="button-plus">＋</span> Novo lançamento</button>
+          </div>
+
+          <div class="filter-toolbar">
+            <div class="period-tabs" role="group" aria-label="Período do painel">
+              <button data-period="today">Hoje</button><button data-period="week">Esta semana</button><button class="selected" data-period="month">Este mês</button><button data-period="custom">Personalizado</button>
+            </div>
+            <div class="date-fields" id="dateFields"><label><span>De</span><input type="date" id="dateStart"></label><span class="date-dash">—</span><label><span>Até</span><input type="date" id="dateEnd"></label><button class="button button-apply" id="applyDates">Aplicar</button></div>
+            <div class="filter-result" id="periodLabel">Período selecionado</div>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card income-card"><div class="metric-top"><span>Entradas</span><span class="metric-icon income-icon">↘</span></div><div class="metric-value" id="metricIncome">R$ 0,00</div><div class="metric-bottom"><span class="metric-change neutral" id="incomeChange">—</span><span>vs. período anterior</span></div><div class="metric-track"><span id="incomeTrack"></span></div></article>
+            <article class="metric-card expense-card"><div class="metric-top"><span>Saídas</span><span class="metric-icon expense-icon">↗</span></div><div class="metric-value" id="metricExpenses">R$ 0,00</div><div class="metric-bottom"><span class="metric-change neutral" id="expensesChange">—</span><span>vs. período anterior</span></div><div class="metric-track"><span id="expenseTrack"></span></div></article>
+            <article class="metric-card balance-card"><div class="metric-top"><span>Saldo do período</span><span class="metric-icon balance-icon">＝</span></div><div class="metric-value" id="metricNet">R$ 0,00</div><div class="metric-bottom"><span class="metric-change neutral" id="netChange">—</span><span>vs. período anterior</span></div><div class="balance-note" id="netNote">Entradas menos saídas registradas</div></article>
+            <article class="metric-card margin-card"><div class="metric-top"><span>Margem operacional estimada</span><span class="metric-icon margin-icon">％</span></div><div class="metric-value" id="metricMargin">0,0%</div><div class="metric-bottom"><span class="metric-change neutral" id="marginChange">—</span><span>pontos percentuais</span></div><div class="balance-note">Quanto sobrou sobre cada R$ 100,00 que entrou</div></article>
+          </div>
+
+          <div class="insight-strip"><div class="insight-symbol">i</div><p><strong>Percentual das saídas sobre as entradas:</strong> <span id="expenseRatio">0,0%</span><span class="insight-separator">·</span><span id="transactionsCount">0 lançamentos</span><span class="insight-extra">A margem é uma estimativa baseada nos lançamentos cadastrados, não substitui a contabilidade fiscal.</span></p></div>
+
+          <div class="content-grid main-charts-grid">
+            <article class="panel chart-panel"><div class="panel-heading"><div><h2>Entradas x saídas</h2><p id="dailyChartCaption">Movimentação ao longo do período</p></div><span class="panel-menu-mark">•••</span></div><div class="legend"><span><i class="legend-dot legend-income"></i>Entradas</span><span><i class="legend-dot legend-expense"></i>Saídas</span></div><div class="chart-box"><canvas id="dailyChart" aria-label="Gráfico de entradas e saídas"></canvas></div><div class="chart-footer"><span>Valores em reais (R$)</span><span id="chartRange"></span></div></article>
+            <article class="panel category-panel"><div class="panel-heading"><div><h2>Onde o dinheiro sai</h2><p>Despesas por categoria</p></div><button class="text-action" data-open-page="transactions">Ver tudo ↗</button></div><div id="categoryList" class="category-list"><div class="empty-state compact">Registre despesas para ver a distribuição.</div></div><div class="category-footer"><span>Total de saídas</span><strong id="categoryTotal">R$ 0,00</strong></div></article>
+          </div>
+
+          <div class="content-grid lower-grid">
+            <article class="panel days-panel"><div class="panel-heading"><div><h2>Quais dias pesam mais?</h2><p>Comparativo de gastos diários</p></div><span class="panel-badge">INSIGHTS</span></div><div class="day-insights"><div class="day-insight highest"><div class="day-insight-icon">↗</div><div><span>Maior gasto do período</span><strong id="highestDayValue">—</strong><small id="highestDayDate">Nenhuma saída registrada</small></div></div><div class="day-insight lowest"><div class="day-insight-icon">↘</div><div><span>Menor gasto (com saída)</span><strong id="lowestDayValue">—</strong><small id="lowestDayDate">Nenhuma saída registrada</small></div></div></div><div class="days-footnote">Dias sem saída não entram no cálculo do menor gasto.</div></article>
+            <article class="panel recent-panel"><div class="panel-heading"><div><h2>Últimos lançamentos</h2><p>Movimentações recentes do período</p></div><button class="text-action" data-open-page="transactions">Ver lançamentos ↗</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Movimentação</th><th>Data</th><th class="align-right">Valor</th></tr></thead><tbody id="recentRows"><tr><td colspan="3" class="table-empty">Ainda não há lançamentos neste período.</td></tr></tbody></table></div></article>
+          </div>
+          <div class="footer-note"><span>●</span> Dica: registre as compras de estoque, taxas, aluguel, energia e demais custos para aproximar o resultado da realidade.</div>
+        </section>
+
+        <section class="page-section" id="page-transactions">
+          <div class="page-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> MOVIMENTAÇÃO DO CAIXA</div><h1>Lançamentos</h1><p class="subtitle">Cada entrada e saída em um só lugar, organizada por data e categoria.</p></div><button class="button button-primary" id="newMovementList"><span class="button-plus">＋</span> Registrar movimento</button></div>
+          <div class="list-summary-grid"><div class="list-summary-card"><span>Entradas filtradas</span><strong class="positive-text" id="listIncome">R$ 0,00</strong></div><div class="list-summary-card"><span>Saídas filtradas</span><strong class="negative-text" id="listExpenses">R$ 0,00</strong></div><div class="list-summary-card"><span>Saldo filtrado</span><strong id="listNet">R$ 0,00</strong></div><div class="list-summary-card"><span>Quantidade</span><strong id="listQty">0</strong></div></div>
+          <div class="panel list-panel"><div class="list-toolbar"><div class="search-field"><span>⌕</span><input id="transactionSearch" type="search" placeholder="Buscar descrição, categoria ou pagamento..."></div><div class="list-filters"><select id="typeFilter"><option value="todos">Todos os tipos</option><option value="entrada">Só entradas</option><option value="saida">Só saídas</option></select><label class="mini-date"><span>De</span><input type="date" id="listStart"></label><label class="mini-date"><span>Até</span><input type="date" id="listEnd"></label><button class="button button-apply" id="applyListFilters">Filtrar</button></div></div><div class="table-wrap full-table-wrap"><table class="data-table full-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th class="align-right">Valor</th><th class="align-center">Ações</th></tr></thead><tbody id="transactionRows"><tr><td colspan="7" class="table-empty">Carregando lançamentos…</td></tr></tbody></table></div><div class="list-bottom"><span id="listStatus">Mostrando lançamentos do período.</span><button class="text-action" id="exportList">Exportar período para CSV ↗</button></div></div>
+        </section>
+
+        <section class="page-section" id="page-reports">
+          <div class="page-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> FECHAMENTO FINANCEIRO</div><h1>Relatórios & <em>comparativos.</em></h1><p class="subtitle">Compare semanas e meses para entender a evolução do caixa.</p></div><div class="data-tools"><button class="button button-secondary" id="backupButton">⇩ Baixar backup</button><button class="button button-secondary" id="restoreButton">↥ Restaurar backup</button><button class="button button-secondary" id="remoteSqlBackupButton">Backup SQL remoto</button><button class="button button-primary" id="importServerButton">Migrar dados antigos</button><input type="file" id="restoreFile" accept="application/json,.json" hidden></div></div>
+          <div class="report-toggle-wrap"><span>PERÍODO DE ANÁLISE</span><div class="period-tabs report-tabs"><button data-report-period="week">Fechamento semanal</button><button class="selected" data-report-period="month">Fechamento mensal</button></div><span class="report-period-date" id="reportPeriodDate"></span></div>
+          <div class="report-comparison-grid"><div class="report-primary-card"><div class="report-label" id="reportCurrentLabel">SALDO DO MÊS ATUAL</div><div class="report-big-value" id="reportCurrentNet">R$ 0,00</div><div class="report-difference" id="reportNetDiff">—</div><div class="report-muted" id="reportPreviousText">Comparado ao mês anterior</div></div><div class="report-metric-card"><span>Entradas</span><strong id="reportIncome">R$ 0,00</strong><div class="comparison-line"><span id="reportIncomeDiff">—</span><small>vs. anterior</small></div></div><div class="report-metric-card"><span>Saídas</span><strong id="reportExpenses">R$ 0,00</strong><div class="comparison-line"><span id="reportExpensesDiff">—</span><small>vs. anterior</small></div></div><div class="report-metric-card"><span>Margem estimada</span><strong id="reportMargin">0,0%</strong><div class="comparison-line"><span id="reportMarginDiff">—</span><small>pontos percentuais</small></div></div></div>
+          <div class="content-grid reports-grid"><article class="panel chart-panel trend-panel"><div class="panel-heading"><div><h2>Evolução financeira</h2><p id="trendCaption">Entradas e saídas por período</p></div><div class="legend"><span><i class="legend-dot legend-income"></i>Entradas</span><span><i class="legend-dot legend-expense"></i>Saídas</span></div></div><div class="chart-box trend-chart-box"><canvas id="trendChart" aria-label="Gráfico de comparação financeira"></canvas></div><div class="chart-footer"><span>Períodos anteriores para comparação</span><span id="trendRange"></span></div></article><article class="panel report-detail-panel"><div class="panel-heading"><div><h2>Leitura do período</h2><p>Resumo do comportamento do caixa</p></div></div><div class="detail-line"><span>Resultado anterior</span><strong id="reportPrevNet">R$ 0,00</strong></div><div class="detail-line"><span>Saldo atual menos anterior</span><strong id="reportNetDifference">R$ 0,00</strong></div><div class="detail-line"><span>Saídas sobre entradas</span><strong id="reportExpenseRatio">0,0%</strong></div><div class="detail-line"><span>Dia de maior gasto</span><strong id="reportHighestDay">—</strong></div><div class="report-note"><span>ⓘ</span><p>A variação percentual do saldo usa o valor absoluto do período anterior como base. Quando o período anterior foi zero, a variação é apresentada como “Novo”.</p></div></article></div>
+          <div class="panel report-table-panel"><div class="panel-heading"><div><h2>Detalhamento por período</h2><p>Valores agregados para conferir os fechamentos</p></div><button class="text-action" id="exportReport">Exportar lançamentos ↗</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Período</th><th class="align-right">Entradas</th><th class="align-right">Saídas</th><th class="align-right">Saldo</th><th class="align-right">Margem</th></tr></thead><tbody id="reportTrendRows"></tbody></table></div></div>
+          <div class="footer-note"><span>●</span> O saldo é a diferença entre entradas e saídas registradas. Para um lucro contábil completo, registre todos os custos, impostos, estoque, taxas e obrigações do negócio.</div>
+        </section>
+        <footer class="app-footer"><span>ESQUINA BAR</span><span>Controle financeiro local · registros salvos neste navegador</span><span id="footerYear"></span></footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="movementModal" aria-hidden="true"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> CAIXA DO BAR</div><h2 id="modalTitle">Novo lançamento</h2><p>Preencha os dados do movimento financeiro.</p></div><button class="modal-close" id="closeModal" aria-label="Fechar">×</button></div><form id="movementForm"><input type="hidden" id="txId"><div class="form-type-toggle"><button type="button" class="type-choice income-choice active" data-type="entrada"><span>↘</span><span><strong>Entrada</strong><small>Dinheiro que entrou</small></span></button><button type="button" class="type-choice expense-choice" data-type="saida"><span>↗</span><span><strong>Saída</strong><small>Dinheiro que saiu</small></span></button></div><input type="hidden" id="txType" value="entrada"><div class="form-grid"><label class="form-field"><span>Data do movimento <b>*</b></span><input type="date" id="txDate" required></label><label class="form-field"><span>Valor (R$) <b>*</b></span><div class="currency-input"><span>R$</span><input type="number" id="txValue" min="0.01" step="0.01" placeholder="0,00" required></div></label><label class="form-field"><span>Descrição <b>*</b></span><input type="text" id="txDescription" maxlength="180" placeholder="Ex.: venda do caixa, compra de cerveja" required></label><label class="form-field"><span>Categoria <b>*</b></span><input type="text" id="txCategory" list="categoryOptions" maxlength="100" placeholder="Escolha ou digite uma categoria" required><datalist id="categoryOptions"></datalist></label><label class="form-field"><span>Forma de pagamento</span><select id="txPayment"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></label><label class="form-field field-wide"><span>Observações (opcional)</span><textarea id="txNotes" rows="2" maxlength="600" placeholder="Detalhes que ajudem no fechamento…"></textarea></label></div><div class="form-feedback" id="formFeedback" role="status"></div><div class="modal-actions"><button type="button" class="button button-secondary" id="cancelModal">Cancelar</button><button type="submit" class="button button-primary" id="saveMovement"><span>✓</span> Salvar lançamento</button></div></form></div></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
+
