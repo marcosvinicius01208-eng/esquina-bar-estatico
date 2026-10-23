@@ -158,6 +158,30 @@ function openMigration(action='import'){migrationAction=action;$('#loginError').
 function closeMigration(){migrationAction='import';$('#loginOverlay').hidden=true;$('#loginPassword').value='';$('#loginError').textContent='';$('#loginSubmit').textContent='Importar registros';}
 function registerServiceWorker(){if('serviceWorker'in navigator&&(location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname)))navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('PWA não pôde ser ativado:',e));}
 function bindEvents(){
+  // Menu responsivo: o evento deve ficar na função de inicialização ativa.
+  const mobileMenu = $('#mobileMenu');
+  const sidebar = $('#sidebar');
+  if (mobileMenu && sidebar) {
+    mobileMenu.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const opening = !sidebar.classList.contains('mobile-open');
+      if (opening) {
+        sidebar.classList.add('mobile-open');
+        mobileMenu.setAttribute('aria-expanded', 'true');
+      } else {
+        closeMobileMenu();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      if (window.matchMedia('(max-width: 700px)').matches &&
+          sidebar.classList.contains('mobile-open') &&
+          !sidebar.contains(event.target) &&
+          !mobileMenu.contains(event.target)) {
+        closeMobileMenu();
+      }
+    });
+  }
   $$('.nav-item').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page)));$$('[data-open-page="transactions"]').forEach(btn=>btn.addEventListener('click',()=>{setListFilterToDashboard();setPage('transactions');}));
   $('#newMovementTop').addEventListener('click',()=>openModal());$('#newMovementList').addEventListener('click',()=>openModal());$('#sidebarNew').addEventListener('click',()=>openModal());$('#closeModal').addEventListener('click',closeModal);$('#cancelModal').addEventListener('click',closeModal);$('#movementModal').addEventListener('click',e=>{if(e.target===$('#movementModal'))closeModal();});$('#movementForm').addEventListener('submit',submitMovement);$$('.type-choice').forEach(btn=>btn.addEventListener('click',()=>setMovementType(btn.dataset.type)));
   $$('.period-tabs:not(.report-tabs) button').forEach(btn=>btn.addEventListener('click',()=>{const period=btn.dataset.period;setPeriod(period);if(period==='custom'){$('#dateFields').style.display='flex';$('#dateStart').focus();}}));$('#applyDates').addEventListener('click',applyCustomDates);$('#dateStart').addEventListener('change',()=>{if(state.period!=='custom'){$$('.period-tabs:not(.report-tabs) button').forEach(el=>el.classList.toggle('selected',el.dataset.period==='custom'));state.period='custom';}});$('#dateEnd').addEventListener('change',()=>{if(state.period!=='custom'){$$('.period-tabs:not(.report-tabs) button').forEach(el=>el.classList.toggle('selected',el.dataset.period==='custom'));state.period='custom';}});
