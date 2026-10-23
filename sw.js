@@ -1,4 +1,4 @@
-const CACHE_NAME = 'esquina-bar-pages-v4';
+const CACHE_NAME = 'esquina-bar-pages-v5';
 const BASE_URL = self.registration.scope;
 const SHELL_PATHS = [
   './',
