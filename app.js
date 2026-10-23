@@ -189,7 +189,103 @@ function bindEvents(){
   $$('[data-report-period]').forEach(btn=>btn.addEventListener('click',()=>{state.reportPeriod=btn.dataset.reportPeriod;loadReport();}));$('#backupButton').addEventListener('click',backupJsonLocal);$('#restoreButton').addEventListener('click',()=>$('#restoreFile').click());$('#restoreFile').addEventListener('change',e=>restoreJsonLocal(e.target.files?.[0]));$('#importServerButton').addEventListener('click',()=>openMigration('import'));$('#remoteSqlBackupButton').addEventListener('click',()=>openMigration('backup'));$('#closeMigration').addEventListener('click',closeMigration);$('#loginOverlay').addEventListener('click',e=>{if(e.target===$('#loginOverlay'))closeMigration();});$('#loginForm').addEventListener('submit',importLegacyServer);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeMigration();closeMobileMenu();}});window.addEventListener('resize',()=>{if(state.overview)renderBarChart($('#dailyChart'),state.overview.daily,false);if(state.report)renderBarChart($('#trendChart'),state.report.trend,true);});
 }
-async function startApplication(){initDates();bindEvents();try{await openLocalDB();$('#loginOverlay').hidden=true;await Promise.all([loadOverview(),loadTransactions(),loadReport()]);registerServiceWorker();}catch(error){showToast(error.message,'error');}}
+const OWNER_UNLOCKED_KEY = 'esquina-bar-shared-login-unlocked-v1';
 
+function readSharedPasswordHash() {
+  const config = window.ESQUINA_ACCESS_CONFIG || {};
+  const hash = String(config.passwordHash || '').trim().toLowerCase();
+  return /^[a-f0-9]{64}$/.test(hash) ? hash : '';
+}
+
+async function hashAccessPassword(password) {
+  if (!window.crypto?.subtle) throw new Error('Este navegador não oferece o recurso necessário. Abra o site pelo HTTPS.');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function constantTimeTextEquals(a, b) {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
+async function unlockOwnerApp() {
+  $('#ownerAuthOverlay').hidden = true;
+  $('#appShell').hidden = false;
+  $('#logoutButton').hidden = false;
+  sessionStorage.setItem(OWNER_UNLOCKED_KEY, '1');
+  try {
+    await openLocalDB();
+    $('#loginOverlay').hidden = true;
+    await Promise.all([loadOverview(), loadTransactions(), loadReport()]);
+  } catch (error) {
+    $('#appShell').hidden = true;
+    $('#ownerAuthOverlay').hidden = false;
+    sessionStorage.removeItem(OWNER_UNLOCKED_KEY);
+    setSharedLoginMessage(error.message || 'Não foi possível abrir os dados locais.');
+  }
+}
+
+function setSharedLoginMessage(message) {
+  const el = $('#ownerAuthMessage');
+  if (el) el.textContent = message || '';
+}
+
+async function loginOwner(event) {
+  event.preventDefault();
+  const button = $('#ownerLoginSubmit');
+  const field = $('#ownerPassword');
+  const enteredPassword = field.value;
+  const expectedHash = readSharedPasswordHash();
+  setSharedLoginMessage('');
+  button.disabled = true;
+  button.textContent = 'Verificando…';
+  try {
+    if (!expectedHash) {
+      throw new Error('A senha ainda não foi configurada. Siga o arquivo CONFIGURAR_LOGIN.txt antes de publicar.');
+    }
+    const actualHash = await hashAccessPassword(enteredPassword);
+    field.value = '';
+    if (!constantTimeTextEquals(actualHash, expectedHash)) {
+      throw new Error('Senha incorreta. Confira a senha e tente novamente.');
+    }
+    await unlockOwnerApp();
+  } catch (error) {
+    field.value = '';
+    setSharedLoginMessage(error.message || 'Não foi possível verificar a senha.');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Entrar';
+  }
+}
+
+function logoutOwner() {
+  sessionStorage.removeItem(OWNER_UNLOCKED_KEY);
+  $('#appShell').hidden = true;
+  $('#ownerAuthOverlay').hidden = false;
+  $('#ownerLoginForm').reset();
+  setSharedLoginMessage('');
+  $('#ownerPassword').focus();
+}
+
+function bindOwnerAuthEvents() {
+  $('#ownerLoginForm').addEventListener('submit', loginOwner);
+  $('#logoutButton').addEventListener('click', logoutOwner);
+}
+
+async function startApplication() {
+  initDates();
+  bindEvents();
+  bindOwnerAuthEvents();
+  registerServiceWorker();
+  $('#appShell').hidden = true;
+  $('#ownerAuthOverlay').hidden = false;
+  if (sessionStorage.getItem(OWNER_UNLOCKED_KEY) === '1') {
+    await unlockOwnerApp();
+  } else if (!readSharedPasswordHash()) {
+    setSharedLoginMessage('A senha ainda precisa ser configurada. Consulte CONFIGURAR_LOGIN.txt.');
+  }
+}
 
 startApplication();

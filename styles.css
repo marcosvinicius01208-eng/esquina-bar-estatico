@@ -16,3 +16,15 @@
 .data-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;max-width:560px}
 .data-tools .button{white-space:nowrap}
 @media(max-width:700px){.data-tools{width:100%;display:grid;grid-template-columns:1fr 1fr;max-width:none}.data-tools .button{width:100%;min-height:42px;padding:10px 8px;font-size:10px}.data-tools #importServerButton{grid-column:1/-1}}
+
+
+/* Login do proprietário: mantido separado do modal de migração do banco antigo. */
+.app-shell[hidden]{display:none!important}
+.owner-auth-overlay{z-index:300;overflow-y:auto;align-items:center}
+.owner-auth-panel[hidden]{display:none!important}
+.owner-auth-panel{width:min(420px,100%);max-height:calc(100dvh - 32px);overflow-y:auto}
+.auth-security-note,.auth-footer-note{font-size:11px;line-height:1.55;color:#8792a0;text-align:center;margin:2px 0 0}
+.auth-footer-note{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(420px,calc(100% - 36px));color:rgba(255,255,255,.82);text-shadow:0 1px 5px rgba(0,0,0,.35);pointer-events:none}
+.owner-auth-panel input{width:100%;box-sizing:border-box}
+.owner-auth-panel .button-secondary{width:100%}
+@media(max-height:620px){.owner-auth-overlay{align-items:start;padding-top:14px;padding-bottom:66px}.owner-auth-panel{max-height:none}.auth-footer-note{position:static;transform:none;margin:12px auto 0;text-shadow:none;color:#dbe0e7}}

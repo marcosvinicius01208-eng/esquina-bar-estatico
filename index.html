@@ -24,7 +24,20 @@
       <button class="button button-secondary" type="button" id="closeMigration">Cancelar</button>
     </form>
   </div>
-  <div class="app-shell">
+  <div class="login-overlay owner-auth-overlay" id="ownerAuthOverlay" role="dialog" aria-modal="true" aria-labelledby="ownerAuthTitle">
+    <form class="login-card owner-auth-panel" id="ownerLoginForm" autocomplete="off">
+      <div class="login-mark">EB<span>•</span></div>
+      <p class="login-eyebrow">ACESSO RESTRITO</p>
+      <h1 id="ownerAuthTitle">Esquina <em>Bar</em></h1>
+      <p class="login-description">Digite a senha compartilhada para abrir o controle financeiro.</p>
+      <label for="ownerPassword">Senha de acesso<input id="ownerPassword" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="login-error" id="ownerAuthMessage" role="alert" aria-live="polite"></p>
+      <button class="button button-primary" type="submit" id="ownerLoginSubmit">Entrar</button>
+      <p class="auth-security-note">O desbloqueio funciona offline depois que o site tiver sido carregado. Como esta versão usa GitHub Pages público, a tela é uma barreira simples e não é segurança forte contra quem sabe inspecionar ou alterar o código.</p>
+    </form>
+  </div>
+
+  <div class="app-shell" id="appShell" hidden>
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-mark">EB<span>•</span></div>
@@ -109,6 +122,7 @@
 
   <div class="modal-backdrop" id="movementModal" aria-hidden="true"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> CAIXA DO BAR</div><h2 id="modalTitle">Novo lançamento</h2><p>Preencha os dados do movimento financeiro.</p></div><button class="modal-close" id="closeModal" aria-label="Fechar">×</button></div><form id="movementForm"><input type="hidden" id="txId"><div class="form-type-toggle"><button type="button" class="type-choice income-choice active" data-type="entrada"><span>↘</span><span><strong>Entrada</strong><small>Dinheiro que entrou</small></span></button><button type="button" class="type-choice expense-choice" data-type="saida"><span>↗</span><span><strong>Saída</strong><small>Dinheiro que saiu</small></span></button></div><input type="hidden" id="txType" value="entrada"><div class="form-grid"><label class="form-field"><span>Data do movimento <b>*</b></span><input type="date" id="txDate" required></label><label class="form-field"><span>Valor (R$) <b>*</b></span><div class="currency-input"><span>R$</span><input type="number" id="txValue" min="0.01" step="0.01" placeholder="0,00" required></div></label><label class="form-field"><span>Descrição <b>*</b></span><input type="text" id="txDescription" maxlength="180" placeholder="Ex.: venda do caixa, compra de cerveja" required></label><label class="form-field"><span>Categoria <b>*</b></span><input type="text" id="txCategory" list="categoryOptions" maxlength="100" placeholder="Escolha ou digite uma categoria" required><datalist id="categoryOptions"></datalist></label><label class="form-field"><span>Forma de pagamento</span><select id="txPayment"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></label><label class="form-field field-wide"><span>Observações (opcional)</span><textarea id="txNotes" rows="2" maxlength="600" placeholder="Detalhes que ajudem no fechamento…"></textarea></label></div><div class="form-feedback" id="formFeedback" role="status"></div><div class="modal-actions"><button type="button" class="button button-secondary" id="cancelModal">Cancelar</button><button type="submit" class="button button-primary" id="saveMovement"><span>✓</span> Salvar lançamento</button></div></form></div></div>
   <div class="toast" id="toast" role="status"></div>
+  <script src="./access-config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

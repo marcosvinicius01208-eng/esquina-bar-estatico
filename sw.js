@@ -1,10 +1,12 @@
-const CACHE_NAME = 'esquina-bar-pages-v7';
+const CACHE_NAME = 'esquina-bar-pages-password-v1';
 const BASE_URL = self.registration.scope;
 const SHELL_PATHS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './access-config.js',
+  './GERAR_SENHA.html',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
